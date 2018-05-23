@@ -157,8 +157,6 @@ end_per_suite(_Config) -> ok.
 %% to a cluster of older nodes.
 new_node_joins_network(Cfg) ->
     Length = 20,
-    NodeStartupTime = proplists:get_value(startup_timeout, Cfg),
-
     Compatible = "aeternity/epoch:local", %% Latest version it should be compatible with
                                           %% Change if comptibility with previous version
                                           %% should be guaranteed
@@ -187,7 +185,7 @@ new_node_joins_network(Cfg) ->
     %% Starts a chain with two nodes
     start_node(old_node1, Cfg),
     start_node(old_node2, Cfg),
-    wait_for_value({height, 0}, [old_node1, old_node2], NodeStartupTime, Cfg),
+    wait_for_startup([old_node1, old_node2], 0, Cfg),
 
     %% Mines for 20 blocks and calculate the average mining time
     StartTime = os:timestamp(),
@@ -210,7 +208,7 @@ new_node_joins_network(Cfg) ->
 
     %% Starts a third node and check it synchronize with the first two
     start_node(new_node1, Cfg),
-    wait_for_value({height, 0}, [new_node1], NodeStartupTime, Cfg),
+    wait_for_startup([new_node1], 0, Cfg),
     ct:log("Node 3 ready to go"),
 
     %% Waits enough for node 3 to sync but not for it to build a new chain
@@ -227,13 +225,12 @@ new_node_joins_network(Cfg) ->
 %% that we had in the chain before stopping: data is persistent.
 docker_keeps_data(Cfg) ->
     Length = 20,
-    NodeStartupTime = proplists:get_value(startup_timeout, Cfg),
     NodeShutdownTime = proplists:get_value(node_shutdown_time, Cfg),
 
     setup_nodes([?STANDALONE_NODE], Cfg),
 
     start_node(standalone_node, Cfg),
-    wait_for_value({height, 0}, [standalone_node], NodeStartupTime, Cfg),
+    wait_for_startup([standalone_node], 0, Cfg),
 
     %% Mines for 20 blocks and calculate the average mining time
     StartTime = os:timestamp(),
@@ -250,7 +247,7 @@ docker_keeps_data(Cfg) ->
     %% This requires some time
 
     start_node(standalone_node, Cfg),
-    wait_for_value({height, 0}, [standalone_node], NodeStartupTime, Cfg),
+    wait_for_startup([standalone_node], 0, Cfg),
 
     ct:log("Node restarted and ready to go"),
 
@@ -280,7 +277,7 @@ docker_keeps_data(Cfg) ->
 
     stop_node(standalone_node, NodeShutdownTime, Cfg),
     start_node(standalone_node, Cfg),
-    wait_for_value({height, 0}, [standalone_node], NodeStartupTime, Cfg),
+    wait_for_startup([standalone_node], 0, Cfg),
 
     %% Give it time to read from disk, but not enough to build a new chain of same length
     timer:sleep(MiningTime * 5),
@@ -309,7 +306,6 @@ docker_keeps_data(Cfg) ->
 %% create a fork with higher difficulty in the time Node1 restarts.
 stop_and_continue_sync(Cfg) ->
     BlocksPerSecond = proplists:get_value(blocks_per_second, Cfg),
-    NodeStartupTime = proplists:get_value(startup_timeout, Cfg),
 
     %% Create a chain long enough to need 10 seconds to fetch it
     Length = BlocksPerSecond * 30,
@@ -326,7 +322,7 @@ stop_and_continue_sync(Cfg) ->
                   }], Cfg),
 
     start_node(node1, Cfg),
-    wait_for_value({height, 0}, [node1], NodeStartupTime, Cfg),
+    wait_for_startup([node1], 0, Cfg),
 
     wait_for_value({height, Length}, [node1], Length * ?MINING_TIMEOUT, Cfg),
 
@@ -336,7 +332,7 @@ stop_and_continue_sync(Cfg) ->
 
     %% Start fetching the chain
     start_node(node2, Cfg),
-    wait_for_value({height, 0}, [node2], NodeStartupTime, Cfg),
+    wait_for_startup([node2], 0, Cfg),
     ct:log("Node 2 ready to go"),
 
     %% we are fetching blocks, abruptly stop node1 now
