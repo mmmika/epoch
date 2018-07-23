@@ -166,7 +166,7 @@ check_update_tx_(F, Mod, RefTx, #state{} = State, Opts) ->
 verify_signatures(SignedTx, #state{trees = Trees}) ->
     aetx_sign:verify(SignedTx, Trees).
 
--spec get_contract_call(aect_contracts:id(), aec_keys:pubkey(),
+-spec get_contract_call(aect_contracts:pubkey(), aec_keys:pubkey(),
                         non_neg_integer(), state()) -> {error, call_not_found}
                                                     |  {ok, aect_call:call()}.
 
