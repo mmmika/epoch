@@ -29,7 +29,9 @@
          for_client/1,
          apply_on_trees/4]).
 
--export([extract_caller/1]).
+-export([is_call/1,
+         extract_caller/1,
+         extract_contract_id/1]).
 
 -spec op_transfer(aec_id:id(), aec_id:id(), non_neg_integer()) -> update().
 op_transfer(From, To, Amount) ->
@@ -267,5 +269,16 @@ account_pubkey(Id) ->
 contract_pubkey(Id) ->
     aec_id:specialize(Id, contract).
 
+-spec is_call(update()) -> boolean().
+is_call({?OP_CALL_CONTRACT, _, _, _, _, _, _}) ->
+    true;
+is_call(_) ->
+    false.
+
+-spec extract_caller(update()) -> aec_keys:pubkey().
 extract_caller({?OP_CALL_CONTRACT, Caller, _, _, _, _, _}) ->
     account_pubkey(Caller).
+
+-spec extract_contract_id(update()) -> aect_contracts:id().
+extract_contract_id({?OP_CALL_CONTRACT, _, Contract, _, _, _, _}) ->
+    contract_pubkey(Contract).
